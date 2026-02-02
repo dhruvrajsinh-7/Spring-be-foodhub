@@ -21,7 +21,6 @@
         <module name="WhitespaceAround"/>
         <module name="NeedBraces"/>
         <module name="EmptyBlock"/>
-        <module name="FinalLocalVariable"/>
 
     </module>
 

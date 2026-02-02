@@ -22,4 +22,8 @@ public class MenuService {
 		return items.stream().map(MenuItemMapper::toDTO).collect(Collectors.toList());
 	}
 
+	public MenuItem getMenuItemById(Long id) {
+		return menuRepo.findById(id).orElseThrow(() -> new RuntimeException("MenuItem not found"));
+	}
+
 }

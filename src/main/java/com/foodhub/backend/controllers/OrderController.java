@@ -3,9 +3,12 @@ package com.foodhub.backend.controllers;
 import com.foodhub.backend.dto.CreateOrderRequest;
 import com.foodhub.backend.entity.Order;
 import com.foodhub.backend.entity.OrderStatus;
+import com.foodhub.backend.response.APINormalResponse;
+import com.foodhub.backend.response.APIResponder;
 import com.foodhub.backend.services.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,23 +27,29 @@ public class OrderController {
 
 	private final OrderService orderService;
 
+	private final APIResponder apiResponder;
+
 	// 🛒 Place Order
 	@PostMapping
-	public Order placeOrder(@Valid @RequestBody CreateOrderRequest request) {
-		return orderService.placeOrder(request.getName(), request.getPhone(), request.getEmail(), request.getAddress(),
-				request.getItems());
+	public ResponseEntity<APINormalResponse<Order>> placeOrder(@Valid @RequestBody CreateOrderRequest request) {
+		Order order = orderService.placeOrder(request.getName(), request.getPhone(), request.getEmail(),
+				request.getAddress(), request.getItems());
+		return apiResponder.respond(order, "Order placed successfully");
 	}
 
 	// 📦 Get Order
 	@GetMapping("/{id}")
-	public Order getOrder(@PathVariable final Long id) {
-		return orderService.getOrderById(id);
+	public ResponseEntity<APINormalResponse<Order>> getOrder(@PathVariable final Long id) {
+		Order order = orderService.getOrderById(id);
+		return apiResponder.respond(order);
 	}
 
 	// 🔄 Update Status
 	@PutMapping("/{id}/status")
-	public Order updateStatus(@PathVariable final Long id, @RequestParam final OrderStatus status) {
-		return orderService.updateStatus(id, status);
+	public ResponseEntity<APINormalResponse<Order>> updateStatus(@PathVariable final Long id,
+			@RequestParam final OrderStatus status) {
+		Order order = orderService.updateStatus(id, status);
+		return apiResponder.respond(order, "Order status updated successfully");
 	}
 
 }

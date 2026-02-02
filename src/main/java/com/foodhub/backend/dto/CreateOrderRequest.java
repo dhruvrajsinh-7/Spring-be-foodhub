@@ -18,7 +18,7 @@ public class CreateOrderRequest {
 	private String phone;
 
 	@Email(message = "Invalid email format")
-	private String email;
+	private String email; // Optional field
 
 	@NotBlank(message = "Address is required")
 	private String address;

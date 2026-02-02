@@ -1,6 +1,7 @@
 package com.foodhub.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -42,10 +43,14 @@ public class Order {
 	@Column(name = "total_amount")
 	private Double totalAmount;
 
-	@Column(name = "created_at", insertable = false, updatable = false)
+	@Column(name = "created_at", insertable = false, updatable = false,
+			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime createdAt;
 
-	@Column(name = "updated_at", insertable = false, updatable = false)
+	@Column(name = "updated_at", insertable = false, updatable = false,
+			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime updatedAt;
 
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL)

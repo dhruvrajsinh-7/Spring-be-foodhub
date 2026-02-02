@@ -1,5 +1,6 @@
 package com.foodhub.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Id;
@@ -33,6 +34,7 @@ public class User {
 	private String address;
 
 	@OneToMany(mappedBy = "user")
+	@JsonIgnore
 	private List<Order> orders;
 
 }
