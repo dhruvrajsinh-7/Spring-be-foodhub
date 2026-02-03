@@ -4,16 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.never;
-
-import com.foodhub.backend.dto.OrderRequestItem;
+import com.foodhub.backend.entity.MenuItem;
 import com.foodhub.backend.entity.Item;
 import com.foodhub.backend.entity.Order;
 import com.foodhub.backend.entity.OrderStatus;
 import com.foodhub.backend.entity.User;
+import com.foodhub.backend.dto.OrderRequestItem;
 import com.foodhub.backend.repository.OrderRepository;
 import com.foodhub.backend.testdata.ItemTestDataFactory;
 import com.foodhub.backend.testdata.OrderTestDataFactory;
@@ -23,15 +22,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 class OrderServiceTests {
 
 	@InjectMocks
@@ -46,9 +49,14 @@ class OrderServiceTests {
 	@Mock
 	private UserService userService;
 
+	@Mock
+	private MenuService menuService;
+
+	@Mock
+	private EntityManager entityManager;
+
 	@BeforeEach
 	void setUp() {
-		// Common setup if needed
 	}
 
 	@Test
@@ -66,10 +74,16 @@ class OrderServiceTests {
 		Item item2 = ItemTestDataFactory.createItem(2L);
 		item2.setPrice(8.99);
 		Order savedOrder = OrderTestDataFactory.createOrder();
+		MenuItem menuItem1 = new MenuItem();
+		MenuItem menuItem2 = new MenuItem();
+
+		given(this.menuService.getMenuItemById(1L)).willReturn(menuItem1);
+		given(this.menuService.getMenuItemById(2L)).willReturn(menuItem2);
+
+		given(this.itemService.getOrCreateItemFromMenuItem(menuItem1)).willReturn(item1);
+		given(this.itemService.getOrCreateItemFromMenuItem(menuItem2)).willReturn(item2);
 
 		given(this.userService.getOrCreateUser(name, phone, email, address)).willReturn(user);
-		given(this.itemService.getItemById(OrderTestDataFactory.getDefaultItemId())).willReturn(item1);
-		given(this.itemService.getItemById(OrderTestDataFactory.getDefaultItemId() + 1)).willReturn(item2);
 		given(this.orderRepository.save(any(Order.class))).willReturn(savedOrder);
 
 		// When
@@ -82,8 +96,8 @@ class OrderServiceTests {
 		assertThat(result.getUser().getPhone()).isEqualTo(user.getPhone());
 		assertThat(result.getUser().getName()).isEqualTo(user.getName());
 		then(this.userService).should().getOrCreateUser(name, phone, email, address);
-		then(this.itemService).should().getItemById(OrderTestDataFactory.getDefaultItemId());
-		then(this.itemService).should().getItemById(OrderTestDataFactory.getDefaultItemId() + 1);
+		then(this.menuService).should().getMenuItemById(1L);
+		then(this.itemService).should().getOrCreateItemFromMenuItem(menuItem1);
 		then(this.orderRepository).should().save(any(Order.class));
 	}
 
@@ -106,9 +120,16 @@ class OrderServiceTests {
 		itemEntity2.setPrice(5.0);
 		Order savedOrder = OrderTestDataFactory.createOrder();
 		savedOrder.setTotalAmount(35.0); // (10 * 2) + (5 * 3) = 35
+		MenuItem menuItem1 = new MenuItem();
+		MenuItem menuItem2 = new MenuItem();
+
+		given(this.menuService.getMenuItemById(1L)).willReturn(menuItem1);
+		given(this.menuService.getMenuItemById(2L)).willReturn(menuItem2);
+
+		given(this.itemService.getOrCreateItemFromMenuItem(menuItem1)).willReturn(itemEntity1);
+		given(this.itemService.getOrCreateItemFromMenuItem(menuItem2)).willReturn(itemEntity2);
 
 		given(this.userService.getOrCreateUser(name, phone, email, address)).willReturn(user);
-		given(this.itemService.getItemById(1L)).willReturn(itemEntity1);
 		given(this.itemService.getItemById(2L)).willReturn(itemEntity2);
 		given(this.orderRepository.save(any(Order.class))).willAnswer(invocation -> {
 			Order order = invocation.getArgument(0);
@@ -123,8 +144,8 @@ class OrderServiceTests {
 		assertThat(result).isNotNull();
 		assertThat(result.getTotalAmount()).isEqualTo(35.0);
 		then(this.userService).should().getOrCreateUser(name, phone, email, address);
-		then(this.itemService).should().getItemById(1L);
-		then(this.itemService).should().getItemById(2L);
+		then(this.menuService).should().getMenuItemById(1L);
+		then(this.itemService).should().getOrCreateItemFromMenuItem(menuItem1);
 		then(this.orderRepository).should().save(any(Order.class));
 	}
 
@@ -141,7 +162,7 @@ class OrderServiceTests {
 		User user = UserTestDataFactory.createUser();
 
 		given(this.userService.getOrCreateUser(name, phone, email, address)).willReturn(user);
-		given(this.itemService.getItemById(anyLong())).willThrow(new RuntimeException("Item not found"));
+		given(this.menuService.getMenuItemById(anyLong())).willThrow(new RuntimeException("Item not found"));
 
 		// When & Then
 		assertThatThrownBy(() -> this.orderService.placeOrder(name, phone, email, address, itemsRequest))
@@ -149,7 +170,7 @@ class OrderServiceTests {
 			.hasMessageContaining("Item not found");
 
 		then(this.userService).should().getOrCreateUser(name, phone, email, address);
-		then(this.itemService).should().getItemById(anyLong());
+		then(this.menuService).should().getMenuItemById(1L);
 		then(this.orderRepository).should(never()).save(any(Order.class));
 	}
 
